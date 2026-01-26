@@ -19,7 +19,7 @@ import {
     formatDurationMs
 } from './utils/input-parsers';
 import {
-    getBlockMetrics,
+    getCachedBlockMetrics,
     getSessionDuration,
     getTokenMetrics
 } from './utils/jsonl';
@@ -101,7 +101,7 @@ async function renderMultipleLines(data: StatusJSON) {
 
     let blockMetrics: BlockMetrics | null = null;
     if (hasBlockTimer) {
-        blockMetrics = getBlockMetrics();
+        blockMetrics = getCachedBlockMetrics();
     }
 
     // Create render context
