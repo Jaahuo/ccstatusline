@@ -13,6 +13,9 @@ import { ContextPercentageUsableWidget } from '../ContextPercentageUsable';
 
 function render(modelId: string | undefined, contextLength: number, rawValue = false, inverse = false) {
     const widget = new ContextPercentageUsableWidget();
+    const contextWindowSize = modelId?.includes('[1m]') ? 1000000 : 200000;
+    const usedPercentage = Math.min(100, contextLength / contextWindowSize * 100);
+    const remainingPercentage = Math.max(0, 100 - usedPercentage);
     const context: RenderContext = {
         data: modelId ? { model: { id: modelId } } : undefined,
         tokenMetrics: {
@@ -20,7 +23,10 @@ function render(modelId: string | undefined, contextLength: number, rawValue = f
             outputTokens: 0,
             cachedTokens: 0,
             totalTokens: 0,
-            contextLength
+            contextLength,
+            contextWindowSize,
+            usedPercentage,
+            remainingPercentage
         }
     };
     const item: WidgetItem = {

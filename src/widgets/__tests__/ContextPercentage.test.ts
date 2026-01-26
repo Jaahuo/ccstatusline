@@ -9,10 +9,14 @@ import type {
     WidgetItem
 } from '../../types';
 import { DEFAULT_SETTINGS } from '../../types/Settings';
+import { getContextConfig } from '../../utils/model-context';
 import { ContextPercentageWidget } from '../ContextPercentage';
 
 function render(modelId: string | undefined, contextLength: number, rawValue = false, inverse = false) {
     const widget = new ContextPercentageWidget();
+    const contextWindowSize = getContextConfig(modelId);
+    const usedPercentage = Math.min(100, contextLength / contextWindowSize * 100);
+    const remainingPercentage = Math.max(0, 100 - usedPercentage);
     const context: RenderContext = {
         data: modelId ? { model: { id: modelId } } : undefined,
         tokenMetrics: {
@@ -20,7 +24,10 @@ function render(modelId: string | undefined, contextLength: number, rawValue = f
             outputTokens: 0,
             cachedTokens: 0,
             totalTokens: 0,
-            contextLength
+            contextLength,
+            contextWindowSize,
+            usedPercentage,
+            remainingPercentage
         }
     };
     const item: WidgetItem = {

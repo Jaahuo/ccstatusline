@@ -73,6 +73,13 @@ The project has dual runtime compatibility - works with both Bun and Node.js:
   - Sonnet 4.5 WITH [1m] suffix: 1M tokens (800k usable at 80%) - requires long context beta access
   - Sonnet 4.5 WITHOUT [1m] suffix: 200k tokens (160k usable at 80%)
   - Legacy models: 200k tokens (160k usable at 80%)
+- **input-parsers.ts**: Parses token metrics from status JSON input
+  - `extractTokenMetricsFromContextWindow()`: Primary method for extracting token metrics from the `context_window` object
+  - `formatDurationMs()`: Formats duration in milliseconds to human-readable string
+- **jsonl.ts**: Fallback JSONL transcript parsing (used when `context_window` is not available in status JSON)
+  - `getTokenMetrics()`: Parses transcript files to calculate token usage
+  - `getSessionDuration()`: Calculates session duration from transcript timestamps
+  - `getBlockMetrics()`: Gets 5-hour block metrics from JSONL files
 
 ### Widgets (src/widgets/)
 Custom widgets implementing the Widget interface defined in src/types/Widget.ts:
@@ -107,7 +114,7 @@ All widgets must implement:
 ## Key Implementation Details
 
 - **Cross-platform stdin reading**: Detects Bun vs Node.js environment and uses appropriate stdin API
-- **Token metrics**: Parses Claude Code transcript files (JSONL format) to calculate token usage
+- **Token metrics**: Primarily extracted from `context_window` object in the status JSON input; falls back to parsing JSONL transcript files if `context_window` is not available
 - **Git integration**: Uses child_process.execSync to get current branch and changes
 - **Terminal width management**: Three modes for handling width (full, full-minus-40, full-until-compact)
 - **Flex separators**: Special separator type that expands to fill available space
@@ -138,10 +145,11 @@ Default to using Bun instead of Node.js:
 - **Dependencies**: All runtime dependencies are bundled using `--packages=external` for npm package
 - **Type checking and linting**: Only run via `bun run lint` command, never using `npx eslint` or `eslint` directly. Never run `tsx`, `bun tsc` or any other variation
 - **Lint rules**: Never disable a lint rule via a comment, no matter how benign the lint warning or error may seem
-- **Testing**: Uses Vitest (via Bun) with 6 test files and ~40 test cases covering:
-  - Model context detection and token calculation (src/utils/__tests__/model-context.test.ts)
+- **Testing**: Uses Vitest (via Bun) with test files covering:
+  - Model context detection (src/utils/__tests__/model-context.test.ts)
+  - Input parsing and token metrics extraction (src/utils/__tests__/input-parsers.test.ts)
   - Context percentage calculations (src/utils/__tests__/context-percentage.test.ts)
-  - JSONL transcript parsing (src/utils/__tests__/jsonl.test.ts)
+  - JSONL transcript parsing fallback (src/utils/__tests__/jsonl.test.ts)
   - Widget rendering (src/widgets/__tests__/*.test.ts)
   - Run tests with `bun test` or `bun test --watch` for watch mode
   - Test configuration: vitest.config.ts

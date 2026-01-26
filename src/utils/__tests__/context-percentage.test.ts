@@ -17,7 +17,10 @@ describe('calculateContextPercentage', () => {
                     outputTokens: 0,
                     cachedTokens: 0,
                     totalTokens: 0,
-                    contextLength: 42000
+                    contextLength: 42000,
+                    contextWindowSize: 1000000,
+                    usedPercentage: 4.2,
+                    remainingPercentage: 95.8
                 }
             };
 
@@ -33,7 +36,10 @@ describe('calculateContextPercentage', () => {
                     outputTokens: 0,
                     cachedTokens: 0,
                     totalTokens: 0,
-                    contextLength: 2000000
+                    contextLength: 2000000,
+                    contextWindowSize: 1000000,
+                    usedPercentage: 100,
+                    remainingPercentage: 0
                 }
             };
 
@@ -51,7 +57,10 @@ describe('calculateContextPercentage', () => {
                     outputTokens: 0,
                     cachedTokens: 0,
                     totalTokens: 0,
-                    contextLength: 42000
+                    contextLength: 42000,
+                    contextWindowSize: 200000,
+                    usedPercentage: 21.0,
+                    remainingPercentage: 79.0
                 }
             };
 
@@ -73,7 +82,10 @@ describe('calculateContextPercentage', () => {
                     outputTokens: 0,
                     cachedTokens: 0,
                     totalTokens: 0,
-                    contextLength: 42000
+                    contextLength: 42000,
+                    contextWindowSize: 200000,
+                    usedPercentage: 21.0,
+                    remainingPercentage: 79.0
                 }
             };
 
