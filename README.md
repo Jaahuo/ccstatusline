@@ -12,7 +12,7 @@
 # ccstatusline
 
 **🎨 A highly customizable status line formatter for Claude Code CLI**
-*Display model info, git branch, token usage, and other metrics in your terminal*
+_Display model info, git branch, token usage, and other metrics in your terminal_
 
 [![npm version](https://img.shields.io/npm/v/ccstatusline.svg)](https://www.npmjs.com/package/ccstatusline)
 [![npm downloads](https://img.shields.io/npm/dm/ccstatusline.svg)](https://www.npmjs.com/package/ccstatusline)
@@ -23,7 +23,6 @@
 
 [![Mentioned in Awesome Claude Code](https://awesome.re/mentioned-badge.svg)](https://github.com/hesreallyhim/awesome-claude-code)
 [![ClaudeLog - A comprehensive knowledge base for Claude](https://claudelog.com/img/claude_log_badge.svg)](https://claudelog.com/)
-
 
 ![Demo](https://raw.githubusercontent.com/sirmalloc/ccstatusline/main/screenshots/demo.gif)
 
@@ -59,7 +58,7 @@
 ### v2.0.12 - Custom Text widget now supports emojis
 
 - **👾 Emoji Support** - You can now paste emoji into the custom text widget. You can also turn on the merge option to get emoji labels for your widgets like this:
-  
+
 ![Emoji Support](https://raw.githubusercontent.com/sirmalloc/ccstatusline/main/screenshots/emojiSupport.png)
 
 ### v2.0.11 - Unlimited Status Lines
@@ -106,6 +105,7 @@
   - Automatically detects block boundaries from transcript timestamps
 
 ### v2.0.0 - Powerline Support & Enhanced Themes
+
 - **⚡ Powerline Mode** - Beautiful Powerline-style status lines with arrow separators and customizable caps
 - **🎨 Built-in Themes** - Multiple pre-configured themes that you can copy and customize
 - **🌈 Advanced Color Support** - Basic (16), 256-color (with custom ANSI codes), and truecolor (with hex codes) modes
@@ -133,7 +133,9 @@
 
 ## 🚀 Quick Start
 
-### No installation needed! Use directly with npx or bunx:
+### Option 1: No installation needed
+
+Use directly with npx or bunx:
 
 ```bash
 # Run the configuration TUI with npm
@@ -143,9 +145,46 @@ npx ccstatusline@latest
 bunx ccstatusline@latest
 ```
 
+### Option 2: Local installation
+
+For faster startup and offline use, install globally:
+
+```bash
+# With npm
+npm install -g ccstatusline
+
+# Or with Bun
+bun add -g ccstatusline
+```
+
+Then run directly:
+
+```bash
+ccstatusline
+```
+
+### Option 3: Build from source
+
+For development or customization, clone and build locally:
+
+```bash
+git clone https://github.com/Jaahuo/ccstatusline.git
+cd ccstatusline
+bun install
+bun run build
+npm link
+```
+
+Then run directly:
+
+```bash
+ccstatusline
+```
+
 ### Configure ccstatusline
 
 The interactive configuration tool provides a terminal UI where you can:
+
 - Configure multiple separate status lines
 - Add/remove/reorder status line widgets
 - Customize colors for each widget
@@ -157,10 +196,11 @@ The interactive configuration tool provides a terminal UI where you can:
 > 💡 **Tip:** Your settings are automatically saved to `~/.config/ccstatusline/settings.json`
 
 > 🔧 **Custom Claude Config:** If your Claude Code configuration is in a non-standard location, set the `CLAUDE_CONFIG_DIR` environment variable:
+>
 > ```bash
 > # Linux/macOS
 > export CLAUDE_CONFIG_DIR=/custom/path/to/.claude
-> 
+>
 > # Windows PowerShell
 > $env:CLAUDE_CONFIG_DIR="C:\custom\path\.claude"
 > ```
@@ -174,6 +214,7 @@ ccstatusline works seamlessly on Windows with full feature compatibility across 
 ### Installation on Windows
 
 #### Option 1: Using Bun (Recommended)
+
 ```powershell
 # Install Bun for Windows
 irm bun.sh/install.ps1 | iex
@@ -183,6 +224,7 @@ bunx ccstatusline@latest
 ```
 
 #### Option 2: Using Node.js
+
 ```powershell
 # Using npm
 npx ccstatusline@latest
@@ -197,14 +239,17 @@ pnpm dlx ccstatusline@latest
 ### Windows-Specific Features
 
 #### Powerline Font Support
+
 For optimal Powerline rendering on Windows:
 
 **Windows Terminal** (Recommended):
+
 - Supports Powerline fonts natively
 - Download from [Microsoft Store](https://aka.ms/terminal)
 - Auto-detects compatible fonts
 
 **PowerShell/Command Prompt**:
+
 ```powershell
 # Install JetBrains Mono Nerd Font via winget
 winget install DEVCOM.JetBrainsMonoNerdFont
@@ -216,7 +261,9 @@ winget install "JetBrains.JetBrainsMono"
 ```
 
 #### Path Handling
+
 ccstatusline automatically handles Windows-specific paths:
+
 - Git repositories work with both `/` and `\` path separators
 - Current Working Directory widget displays Windows-style paths correctly
 - Full support for mapped network drives and UNC paths
@@ -227,6 +274,7 @@ ccstatusline automatically handles Windows-specific paths:
 #### Common Issues & Solutions
 
 **Issue**: Powerline symbols showing as question marks or boxes
+
 ```powershell
 # Solution: Install a compatible Nerd Font
 winget install JetBrainsMono.NerdFont
@@ -234,6 +282,7 @@ winget install JetBrainsMono.NerdFont
 ```
 
 **Issue**: Git commands not recognized
+
 ```powershell
 # Check if Git is installed and in PATH
 git --version
@@ -244,6 +293,7 @@ winget install Git.Git
 ```
 
 **Issue**: Permission errors during installation
+
 ```powershell
 # Use non-global installation (recommended)
 npx ccstatusline@latest
@@ -252,12 +302,14 @@ npx ccstatusline@latest
 ```
 
 **Issue**: "Execution Policy" errors in PowerShell
+
 ```powershell
 # Temporarily allow script execution
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
 
 **Issue**: Windows Defender blocking execution
+
 ```powershell
 # If Windows Defender flags the binary:
 # 1. Open Windows Security
@@ -268,6 +320,7 @@ Add-MpPreference -ExclusionPath "$env:USERPROFILE\.bun\bin"
 ```
 
 #### Windows Subsystem for Linux (WSL)
+
 ccstatusline works perfectly in WSL environments:
 
 ```bash
@@ -278,6 +331,7 @@ bunx ccstatusline@latest
 ```
 
 **WSL Benefits**:
+
 - Native Unix-style path handling
 - Better font rendering in WSL terminals
 - Seamless integration with Linux development workflows
@@ -287,6 +341,7 @@ bunx ccstatusline@latest
 For the best experience, configure Windows Terminal with these recommended settings:
 
 #### Terminal Settings (settings.json)
+
 ```json
 {
   "profiles": {
@@ -302,13 +357,16 @@ For the best experience, configure Windows Terminal with these recommended setti
 ```
 
 #### Claude Code Integration
+
 Configure ccstatusline in your Claude Code settings:
 
 **Settings Location:**
+
 - Default: `~/.claude/settings.json` (Windows: `%USERPROFILE%\.claude\settings.json`)
 - Custom: Set `CLAUDE_CONFIG_DIR` environment variable to use a different directory
 
 **For Bun users**:
+
 ```json
 {
   "statusLine": "bunx ccstatusline@latest"
@@ -316,6 +374,7 @@ Configure ccstatusline in your Claude Code settings:
 ```
 
 **For npm users**:
+
 ```json
 {
   "statusLine": "npx ccstatusline@latest"
@@ -327,6 +386,7 @@ Configure ccstatusline in your Claude Code settings:
 ### Performance on Windows
 
 ccstatusline is optimized for Windows performance:
+
 - **Bun runtime**: Significantly faster startup times on Windows
 - **Caching**: Intelligent caching of git status and file operations
 - **Async operations**: Non-blocking command execution
@@ -337,7 +397,7 @@ ccstatusline is optimized for Windows performance:
 Some widgets have Windows-specific optimizations:
 
 - **Current Working Directory**: Displays Windows drive letters and UNC paths
-- **Git Widgets**: Handle Windows line endings (CRLF) automatically  
+- **Git Widgets**: Handle Windows line endings (CRLF) automatically
 - **Custom Commands**: Support both PowerShell and cmd.exe commands
 - **Block Timer**: Accounts for Windows timezone handling
 
@@ -375,7 +435,9 @@ Once configured, ccstatusline automatically formats your Claude Code status line
 ---
 
 ### Terminal Width Options
+
 These settings affect where long lines are truncated, and where right-alignment occurs when using flex separators:
+
 - **Full width always** - Uses full terminal width (may wrap if auto-compact message appears or IDE integration adds text)
 - **Full width minus 40** - Reserves 40 characters for auto-compact message to prevent wrapping (default)
 - **Full width until compact** - Dynamically switches between full width and minus 40 based on context percentage threshold (configurable, default 60%)
@@ -389,6 +451,7 @@ Configure global formatting preferences that apply to all widgets:
 ![Global Options](https://raw.githubusercontent.com/sirmalloc/ccstatusline/main/screenshots/global.png)
 
 #### Default Padding & Separators
+
 - **Default Padding** - Add consistent padding to the left and right of each widget
 - **Default Separator** - Automatically insert a separator between all widgets
   - Press **(p)** to edit padding
@@ -421,15 +484,18 @@ The Block Timer widget helps you track your progress through Claude Code's 5-hou
 ![Block Timer](https://raw.githubusercontent.com/sirmalloc/ccstatusline/main/screenshots/blockTimer.png)
 
 **Display Modes:**
+
 - **Time Display** - Shows elapsed time as "3hr 45m" or remaining time as "1hr 15m" (default)
 - **Progress Bar** - Full width 32-character progress bar with percentage
 - **Progress Bar (Short)** - Compact 16-character progress bar with percentage
 
 **Time Direction:**
+
 - **Elapsed** - Shows time used in current block (default)
 - **Remaining** - Shows time left in current block
 
 **Features:**
+
 - Automatically detects block boundaries from transcript timestamps
 - Floors block start time to the hour for consistent tracking
 - Shows "Block: 3hr 45m" in normal mode or just "3hr 45m" in raw value mode
@@ -440,6 +506,7 @@ The Block Timer widget helps you track your progress through Claude Code's 5-hou
 ### 🔤 Raw Value Mode
 
 Some widgets support "raw value" mode which displays just the value without a label:
+
 - Normal: `Model: Claude 3.5 Sonnet` → Raw: `Claude 3.5 Sonnet`
 - Normal: `Session: 2hr 15m` → Raw: `2hr 15m`
 - Normal: `Block: 3hr 45m` → Raw: `3hr 45m`
@@ -450,13 +517,17 @@ Some widgets support "raw value" mode which displays just the value without a la
 ### 🔧 Custom Widgets
 
 #### Custom Text Widget
+
 Add static text to your status line. Perfect for:
+
 - Project identifiers
 - Environment indicators (dev/prod)
 - Personal labels or reminders
 
 #### Custom Command Widget
+
 Execute shell commands and display their output dynamically:
+
 - Refreshes whenever the statusline is updated by Claude Code
 - Receives the full Claude Code JSON data via stdin (model info, session ID, transcript path, etc.)
 - Displays command output inline in your status line
@@ -499,7 +570,7 @@ When terminal width is detected, status lines automatically truncate with ellips
 Complete API documentation is generated using TypeDoc and includes detailed information about:
 
 - **Core Types**: Configuration interfaces, widget definitions, and render contexts
-- **Widget System**: All available widgets and their customization options  
+- **Widget System**: All available widgets and their customization options
 - **Utility Functions**: Helper functions for rendering, configuration, and terminal handling
 - **Status Line Rendering**: Core rendering engine and formatting options
 
@@ -593,6 +664,7 @@ ccstatusline/
 ├── tsconfig.json
 └── README.md
 ```
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
