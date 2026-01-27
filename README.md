@@ -163,7 +163,7 @@ Then run directly:
 ccstatusline
 ```
 
-### Option 3: Build from source
+### Option 3: Build from source (Node.js)
 
 For development or customization, clone and build locally:
 
@@ -180,6 +180,26 @@ Then run directly:
 ```bash
 ccstatusline
 ```
+
+### Option 4: Build from source (Bun runtime)
+
+For faster startup times using Bun as the runtime:
+
+```bash
+git clone https://github.com/Jaahuo/ccstatusline.git
+cd ccstatusline
+bun install
+bun run build:bun
+bun link
+```
+
+Then run directly:
+
+```bash
+ccstatusline
+```
+
+> 💡 **Note:** The Bun build produces a smaller binary optimized for Bun's runtime, resulting in faster startup times compared to the Node.js build.
 
 ### Configure ccstatusline
 

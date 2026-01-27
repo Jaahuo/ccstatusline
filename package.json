@@ -12,8 +12,11 @@
   ],
   "scripts": {
     "start": "bun run src/ccstatusline.ts",
-    "build": "rm -rf dist/* ; bun build src/ccstatusline.ts --target=node --outfile=dist/ccstatusline.js --target-version=20 --minify --define 'process.env.NODE_ENV=\"production\"'",
-    "postbuild": "bun run scripts/replace-version.ts",
+    "build": "bun run build:node",
+    "build:node": "rm -rf dist/* ; bun build src/ccstatusline.ts --target=node --outfile=dist/ccstatusline.js --target-version=20 --production",
+    "postbuild:node": "bun run scripts/replace-version.ts",
+    "build:bun": "rm -rf dist/* ; bun build src/ccstatusline.ts --target=bun --outfile=dist/ccstatusline.js --production",
+    "postbuild:bun": "BUILD_TARGET=bun bun run scripts/replace-version.ts",
     "example": "cat scripts/payload.example.json | bun start",
     "example:start": "cat scripts/payload.example-start.json | bun start",
     "prepublishOnly": "bun run build",
