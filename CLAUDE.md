@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 
 ccstatusline is a customizable status line formatter for Claude Code CLI that displays model info, git branch, token usage, and other metrics. It functions as both:
+
 1. A piped command processor for Claude Code status lines
 2. An interactive TUI configuration tool when run without input
 
@@ -17,10 +18,7 @@ bun install
 # Run in interactive TUI mode
 bun run start
 
-# Test with piped input (use [1m] suffix for 1M context models)
-echo '{"model":{"id":"claude-sonnet-4-5-20250929[1m]"},"transcript_path":"test.jsonl"}' | bun run src/ccstatusline.ts
-
-# Or use example payload
+# Test with example payload
 bun run example
 
 # Build for npm distribution
@@ -41,11 +39,13 @@ bun run lint   # Runs TypeScript type checking and ESLint with auto-fix
 The project has dual runtime compatibility - works with both Bun and Node.js:
 
 ### Core Structure
+
 - **src/ccstatusline.ts**: Main entry point that detects piped vs interactive mode
   - Piped mode: Parses JSON from stdin and renders formatted status line
   - Interactive mode: Launches React/Ink TUI for configuration
 
 ### TUI Components (src/tui/)
+
 - **index.tsx**: Main TUI entry point that handles React/Ink initialization
 - **App.tsx**: Root component managing navigation and state
 - **components/**: Modular UI components for different configuration screens
@@ -53,6 +53,7 @@ The project has dual runtime compatibility - works with both Bun and Node.js:
   - PowerlineSetup, TerminalOptionsMenu, StatusLinePreview
 
 ### Utilities (src/utils/)
+
 - **config.ts**: Settings management
   - Loads from `~/.config/ccstatusline/settings.json`
   - Handles migration from old settings format
@@ -82,10 +83,12 @@ The project has dual runtime compatibility - works with both Bun and Node.js:
   - `getBlockMetrics()`: Gets 5-hour block metrics from JSONL files
 
 ### Widgets (src/widgets/)
+
 Custom widgets implementing the Widget interface defined in src/types/Widget.ts:
 
 **Widget Interface:**
 All widgets must implement:
+
 - `getDefaultColor()`: Default color for the widget
 - `getDescription()`: Description shown in TUI
 - `getDisplayName()`: Display name shown in TUI
@@ -96,6 +99,7 @@ All widgets must implement:
 - Optional: `renderEditor()`, `getCustomKeybinds()`, `handleEditorAction()`
 
 **Widget Registry Pattern:**
+
 - Located in src/utils/widgets.ts
 - Uses a Map-based registry (`widgetRegistry`) that maps widget type strings to widget instances
 - `getWidget(type)`: Retrieves widget instance by type
@@ -103,6 +107,7 @@ All widgets must implement:
 - `isKnownWidgetType()`: Validates if a type is registered
 
 **Available Widgets:**
+
 - Model, Version, OutputStyle - Claude Code metadata display
 - GitBranch, GitChanges, GitWorktree - Git repository status
 - TokensInput, TokensOutput, TokensCached, TokensTotal - Token usage metrics
@@ -125,6 +130,7 @@ All widgets must implement:
 ## Bun Usage Preferences
 
 Default to using Bun instead of Node.js:
+
 - Use `bun <file>` instead of `node <file>` or `ts-node <file>`
 - Use `bun install` instead of `npm install`
 - Use `bun run <script>` instead of `npm run <script>`
@@ -146,11 +152,11 @@ Default to using Bun instead of Node.js:
 - **Type checking and linting**: Only run via `bun run lint` command, never using `npx eslint` or `eslint` directly. Never run `tsx`, `bun tsc` or any other variation
 - **Lint rules**: Never disable a lint rule via a comment, no matter how benign the lint warning or error may seem
 - **Testing**: Uses Vitest (via Bun) with test files covering:
-  - Model context detection (src/utils/__tests__/model-context.test.ts)
-  - Input parsing and token metrics extraction (src/utils/__tests__/input-parsers.test.ts)
-  - Context percentage calculations (src/utils/__tests__/context-percentage.test.ts)
-  - JSONL transcript parsing fallback (src/utils/__tests__/jsonl.test.ts)
-  - Widget rendering (src/widgets/__tests__/*.test.ts)
+  - Model context detection (src/utils/**tests**/model-context.test.ts)
+  - Input parsing and token metrics extraction (src/utils/**tests**/input-parsers.test.ts)
+  - Context percentage calculations (src/utils/**tests**/context-percentage.test.ts)
+  - JSONL transcript parsing fallback (src/utils/**tests**/jsonl.test.ts)
+  - Widget rendering (src/widgets/**tests**/\*.test.ts)
   - Run tests with `bun test` or `bun test --watch` for watch mode
   - Test configuration: vitest.config.ts
   - Manual testing also available via piped input and TUI interaction
