@@ -41,7 +41,7 @@ export const StatusJSONSchema = z.looseObject({
     session_id: z.string().optional(),
     transcript_path: z.string().optional(),
     cwd: z.string().optional(),
-    model: modelSchema.optional(),
+    model: z.union([z.string(), modelSchema]).optional(),
     workspace: workspaceSchema.optional(),
     version: z.string().optional(),
     output_style: outputStyleSchema.optional(),

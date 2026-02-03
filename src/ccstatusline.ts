@@ -77,7 +77,8 @@ async function renderMultipleLines(data: StatusJSON) {
 
     let tokenMetrics: TokenMetrics | null = null;
     if (hasTokenItems && data.context_window) {
-        tokenMetrics = extractTokenMetricsFromContextWindow(data.context_window, data.model?.id);
+        const modelId = typeof data.model === 'string' ? data.model : data.model?.id;
+        tokenMetrics = extractTokenMetricsFromContextWindow(data.context_window, modelId);
     }
 
     let sessionDuration: string | null = null;
