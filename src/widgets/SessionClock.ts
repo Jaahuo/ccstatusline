@@ -10,11 +10,11 @@ export class SessionClockWidget implements Widget {
     getDefaultColor(): string { return 'yellow'; }
     getDescription(): string { return 'Shows elapsed time since current session started'; }
     getDisplayName(): string { return 'Session Clock'; }
-    getEditorDisplay(item: WidgetItem): WidgetEditorDisplay {
+    getEditorDisplay(_item: WidgetItem): WidgetEditorDisplay {
         return { displayText: this.getDisplayName() };
     }
 
-    render(item: WidgetItem, context: RenderContext, settings: Settings): string | null {
+    render(item: WidgetItem, context: RenderContext, _settings: Settings): string | null {
         if (context.isPreview) {
             return item.rawValue ? '2hr 15m' : 'Session: 2hr 15m';
         }
@@ -24,5 +24,5 @@ export class SessionClockWidget implements Widget {
     }
 
     supportsRawValue(): boolean { return true; }
-    supportsColors(item: WidgetItem): boolean { return true; }
+    supportsColors(_item: WidgetItem): boolean { return true; }
 }

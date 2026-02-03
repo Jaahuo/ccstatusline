@@ -3,7 +3,10 @@ import {
     Box,
     Text
 } from 'ink';
-import React from 'react';
+import React, {
+    useEffect,
+    useState
+} from 'react';
 
 import type { RenderContext } from '../../types/RenderContext';
 import type { Settings } from '../../types/Settings';
@@ -24,16 +27,16 @@ export interface StatusLinePreviewProps {
     onTruncationChange?: (isTruncated: boolean) => void;
 }
 
-const renderSingleLine = (
+const renderSingleLine = async (
     widgets: WidgetItem[],
     terminalWidth: number,
-    widthDetectionAvailable: boolean,
+    _widthDetectionAvailable: boolean,
     settings: Settings,
     lineIndex: number,
     globalSeparatorIndex: number,
     preRenderedWidgets: PreRenderedWidget[],
     preCalculatedMaxWidths: number[]
-): RenderResult => {
+): Promise<RenderResult> => {
     // Create render context for preview
     const context: RenderContext = {
         terminalWidth,
@@ -46,45 +49,59 @@ const renderSingleLine = (
 };
 
 export const StatusLinePreview: React.FC<StatusLinePreviewProps> = ({ lines, terminalWidth, settings, onTruncationChange }) => {
-    const widthDetectionAvailable = React.useMemo(() => canDetectTerminalWidth(), []);
+    const [widthDetectionAvailable, setWidthDetectionAvailable] = useState(false);
+    const [renderedLines, setRenderedLines] = useState<string[]>([]);
+    const [anyTruncated, setAnyTruncated] = useState(false);
 
-    // Render each configured line
-    // Pass the full terminal width - the renderer will handle preview adjustments
-    const { renderedLines, anyTruncated } = React.useMemo(() => {
-        if (!settings)
-            return { renderedLines: [], anyTruncated: false };
+    // Check terminal width detection availability
+    useEffect(() => {
+        void canDetectTerminalWidth().then(setWidthDetectionAvailable);
+    }, []);
 
-        // Always pre-render all widgets once (for efficiency)
-        const preRenderedLines = preRenderAllWidgets(lines, settings, { terminalWidth, isPreview: true });
-        const preCalculatedMaxWidths = calculateMaxWidthsFromPreRendered(preRenderedLines, settings);
-
-        let globalSeparatorIndex = 0;
-        const result: string[] = [];
-        let truncated = false;
-
-        for (let i = 0; i < lines.length; i++) {
-            const lineItems = lines[i];
-            if (lineItems && lineItems.length > 0) {
-                const preRenderedWidgets = preRenderedLines[i] ?? [];
-                const renderResult = renderSingleLine(lineItems, terminalWidth, widthDetectionAvailable, settings, i, globalSeparatorIndex, preRenderedWidgets, preCalculatedMaxWidths);
-                result.push(renderResult.line);
-                if (renderResult.wasTruncated) {
-                    truncated = true;
-                }
-
-                // Count separators used in this line (widgets - 1, excluding merged widgets)
-                const nonMergedWidgets = lineItems.filter((_, idx) => idx === lineItems.length - 1 || !lineItems[idx]?.merge);
-                if (nonMergedWidgets.length > 1) {
-                    globalSeparatorIndex += nonMergedWidgets.length - 1;
-                }
-            }
+    // Render each configured line asynchronously
+    useEffect(() => {
+        if (!settings) {
+            setRenderedLines([]);
+            setAnyTruncated(false);
+            return;
         }
 
-        return { renderedLines: result, anyTruncated: truncated };
+        const renderAsync = async () => {
+            // Always pre-render all widgets once (for efficiency)
+            const preRenderedLines = await preRenderAllWidgets(lines, settings, { terminalWidth, isPreview: true });
+            const preCalculatedMaxWidths = calculateMaxWidthsFromPreRendered(preRenderedLines, settings);
+
+            let globalSeparatorIndex = 0;
+            const result: string[] = [];
+            let truncated = false;
+
+            for (let i = 0; i < lines.length; i++) {
+                const lineItems = lines[i];
+                if (lineItems && lineItems.length > 0) {
+                    const preRenderedWidgets = preRenderedLines[i] ?? [];
+                    const renderResult = await renderSingleLine(lineItems, terminalWidth, widthDetectionAvailable, settings, i, globalSeparatorIndex, preRenderedWidgets, preCalculatedMaxWidths);
+                    result.push(renderResult.line);
+                    if (renderResult.wasTruncated) {
+                        truncated = true;
+                    }
+
+                    // Count separators used in this line (widgets - 1, excluding merged widgets)
+                    const nonMergedWidgets = lineItems.filter((_, idx) => idx === lineItems.length - 1 || !lineItems[idx]?.merge);
+                    if (nonMergedWidgets.length > 1) {
+                        globalSeparatorIndex += nonMergedWidgets.length - 1;
+                    }
+                }
+            }
+
+            setRenderedLines(result);
+            setAnyTruncated(truncated);
+        };
+
+        void renderAsync();
     }, [lines, terminalWidth, widthDetectionAvailable, settings]);
 
     // Notify parent when truncation status changes
-    React.useEffect(() => {
+    useEffect(() => {
         onTruncationChange?.(anyTruncated);
     }, [anyTruncated, onTruncationChange]);
 

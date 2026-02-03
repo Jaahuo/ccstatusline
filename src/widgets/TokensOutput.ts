@@ -11,11 +11,11 @@ export class TokensOutputWidget implements Widget {
     getDefaultColor(): string { return 'white'; }
     getDescription(): string { return 'Shows output token count for the current session'; }
     getDisplayName(): string { return 'Tokens Output'; }
-    getEditorDisplay(item: WidgetItem): WidgetEditorDisplay {
+    getEditorDisplay(_item: WidgetItem): WidgetEditorDisplay {
         return { displayText: this.getDisplayName() };
     }
 
-    render(item: WidgetItem, context: RenderContext, settings: Settings): string | null {
+    render(item: WidgetItem, context: RenderContext, _settings: Settings): string | null {
         if (context.isPreview) {
             return item.rawValue ? '3.4k' : 'Out: 3.4k';
         } else if (context.tokenMetrics) {
@@ -25,5 +25,5 @@ export class TokensOutputWidget implements Widget {
     }
 
     supportsRawValue(): boolean { return true; }
-    supportsColors(item: WidgetItem): boolean { return true; }
+    supportsColors(_item: WidgetItem): boolean { return true; }
 }

@@ -67,10 +67,14 @@ export const App: React.FC = () => {
     const [existingStatusLine, setExistingStatusLine] = useState<string | null>(null);
     const [saveMessage, setSaveMessage] = useState<string | null>(null);
     const [previewIsTruncated, setPreviewIsTruncated] = useState(false);
+    const [bunxAvailable, setBunxAvailable] = useState(false);
 
     useEffect(() => {
         // Load existing status line
         void getExistingStatusLine().then(setExistingStatusLine);
+
+        // Check if bunx is available
+        void isBunxAvailable().then(setBunxAvailable);
 
         void loadSettings().then((loadedSettings) => {
             // Set global chalk level based on settings (default to 256 colors for compatibility)
@@ -412,7 +416,7 @@ export const App: React.FC = () => {
                 )}
                 {screen === 'install' && (
                     <InstallMenu
-                        bunxAvailable={isBunxAvailable()}
+                        bunxAvailable={bunxAvailable}
                         existingStatusLine={existingStatusLine}
                         onSelectNpx={handleNpxInstall}
                         onSelectBunx={handleBunxInstall}

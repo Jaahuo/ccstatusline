@@ -1,4 +1,5 @@
-import { execSync } from 'child_process';
+import { exec } from 'node:child_process';
+import { promisify } from 'node:util';
 
 import type { RenderContext } from '../types/RenderContext';
 import type {
@@ -7,6 +8,8 @@ import type {
     WidgetEditorDisplay,
     WidgetItem
 } from '../types/Widget';
+
+const execAsync = promisify(exec);
 
 export class GitWorktreeWidget implements Widget {
     getDefaultColor(): string { return 'blue'; }
@@ -40,25 +43,23 @@ export class GitWorktreeWidget implements Widget {
         return null;
     }
 
-    render(item: WidgetItem, context: RenderContext): string | null {
+    async render(item: WidgetItem, context: RenderContext): Promise<string | null> {
         const hideNoGit = item.metadata?.hideNoGit === 'true';
 
         if (context.isPreview)
             return item.rawValue ? 'main' : '𖠰 main';
 
-        const worktree = this.getGitWorktree();
+        const worktree = await this.getGitWorktree();
         if (worktree)
             return item.rawValue ? worktree : `𖠰 ${worktree}`;
 
         return hideNoGit ? null : '𖠰 no git';
     }
 
-    private getGitWorktree(): string | null {
+    private async getGitWorktree(): Promise<string | null> {
         try {
-            const worktreeDir = execSync('git rev-parse --git-dir', {
-                encoding: 'utf8',
-                stdio: ['pipe', 'pipe', 'ignore']
-            }).trim();
+            const { stdout } = await execAsync('git rev-parse --git-dir', { encoding: 'utf8' });
+            const worktreeDir = stdout.trim();
 
             // /some/path/.git or .git
             if (worktreeDir.endsWith('/.git') || worktreeDir === '.git')

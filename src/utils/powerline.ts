@@ -1,5 +1,6 @@
-import { execSync } from 'child_process';
 import * as fs from 'fs';
+import { exec } from 'node:child_process';
+import { promisify } from 'node:util';
 import * as os from 'os';
 import * as path from 'path';
 
@@ -7,6 +8,8 @@ import type { PowerlineFontStatus } from '../types/PowerlineFontStatus';
 
 // Re-export for backward compatibility
 export type { PowerlineFontStatus };
+
+const execAsync = promisify(exec);
 
 // Track if fonts were installed during this session (for DEBUG_FONT_INSTALL)
 let fontsInstalledThisSession = false;
@@ -105,9 +108,6 @@ export function checkPowerlineFonts(): PowerlineFontStatus {
  * Check if Powerline fonts are installed (async version with fc-list check)
  */
 export async function checkPowerlineFontsAsync(): Promise<PowerlineFontStatus> {
-    // Ensure this is always async
-    await Promise.resolve();
-
     // Debug mode: pretend fonts aren't installed (unless we installed them this session)
     if (process.env.DEBUG_FONT_INSTALL === '1' && !fontsInstalledThisSession) {
         return {
@@ -127,10 +127,6 @@ export async function checkPowerlineFontsAsync(): Promise<PowerlineFontStatus> {
         const platform = os.platform();
         if (platform === 'linux' || platform === 'darwin') {
             try {
-                const { exec } = await import('child_process');
-                const { promisify } = await import('util');
-                const execAsync = promisify(exec);
-
                 const { stdout } = await execAsync('fc-list 2>/dev/null | grep -i powerline', { encoding: 'utf8' });
 
                 if (stdout.trim()) {
@@ -154,9 +150,6 @@ export async function checkPowerlineFontsAsync(): Promise<PowerlineFontStatus> {
  * Install Powerline fonts on the system
  */
 export async function installPowerlineFonts(): Promise<{ success: boolean; message: string }> {
-    // Ensure this is always async
-    await Promise.resolve();
-
     try {
         const platform = os.platform();
         let fontDir: string;
@@ -197,12 +190,9 @@ export async function installPowerlineFonts(): Promise<{ success: boolean; messa
             }
 
             // Clone Powerline fonts repository
-            execSync(
+            await execAsync(
                 `git clone --depth=1 https://github.com/powerline/fonts.git "${tempDir}"`,
-                {
-                    stdio: 'pipe',
-                    encoding: 'utf8'
-                }
+                { encoding: 'utf8' }
             );
 
             // Run the install script based on platform
@@ -214,8 +204,7 @@ export async function installPowerlineFonts(): Promise<{ success: boolean; messa
                     fs.chmodSync(installScript, 0o755);
 
                     // Run install script
-                    execSync(`cd "${tempDir}" && ./install.sh`, {
-                        stdio: 'pipe',
+                    await execAsync(`cd "${tempDir}" && ./install.sh`, {
                         encoding: 'utf8',
                         shell: '/bin/bash'
                     });
@@ -223,10 +212,7 @@ export async function installPowerlineFonts(): Promise<{ success: boolean; messa
                     // On Linux, update font cache
                     if (platform === 'linux') {
                         try {
-                            execSync('fc-cache -f -v', {
-                                stdio: 'pipe',
-                                encoding: 'utf8'
-                            });
+                            await execAsync('fc-cache -f -v', { encoding: 'utf8' });
                         } catch {
                             // fc-cache might not be available
                         }

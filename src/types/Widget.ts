@@ -35,7 +35,7 @@ export interface Widget {
     getDescription(): string;
     getDisplayName(): string;
     getEditorDisplay(item: WidgetItem): WidgetEditorDisplay;
-    render(item: WidgetItem, context: RenderContext, settings: Settings): string | null;
+    render(item: WidgetItem, context: RenderContext, settings: Settings): Promise<string | null> | (string | null);
     getCustomKeybinds?(): CustomKeybind[];
     renderEditor?(props: WidgetEditorProps): React.ReactElement | null;
     supportsRawValue(): boolean;

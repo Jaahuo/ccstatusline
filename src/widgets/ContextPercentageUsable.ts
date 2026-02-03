@@ -66,5 +66,5 @@ export class ContextPercentageUsableWidget implements Widget {
     }
 
     supportsRawValue(): boolean { return true; }
-    supportsColors(item: WidgetItem): boolean { return true; }
+    supportsColors(_item: WidgetItem): boolean { return true; }
 }

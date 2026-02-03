@@ -1,4 +1,5 @@
-import { execSync } from 'child_process';
+import { exec } from 'node:child_process';
+import { promisify } from 'node:util';
 
 import type { RenderContext } from '../types/RenderContext';
 import type { Settings } from '../types/Settings';
@@ -8,6 +9,8 @@ import type {
     WidgetEditorDisplay,
     WidgetItem
 } from '../types/Widget';
+
+const execAsync = promisify(exec);
 
 export class GitChangesWidget implements Widget {
     getDefaultColor(): string { return 'yellow'; }
@@ -41,34 +44,32 @@ export class GitChangesWidget implements Widget {
         return null;
     }
 
-    render(item: WidgetItem, context: RenderContext, settings: Settings): string | null {
+    async render(item: WidgetItem, context: RenderContext, settings: Settings): Promise<string | null> {
         const hideNoGit = item.metadata?.hideNoGit === 'true';
 
         if (context.isPreview) {
             return '(+42,-10)';
         }
 
-        const changes = this.getGitChanges();
+        const changes = await this.getGitChanges();
         if (changes)
             return `(+${changes.insertions},-${changes.deletions})`;
         else
             return hideNoGit ? null : '(no git)';
     }
 
-    private getGitChanges(): { insertions: number; deletions: number } | null {
+    private async getGitChanges(): Promise<{ insertions: number; deletions: number } | null> {
         try {
             let totalInsertions = 0;
             let totalDeletions = 0;
 
-            const unstagedStat = execSync('git diff --shortstat', {
-                encoding: 'utf8',
-                stdio: ['pipe', 'pipe', 'ignore']
-            }).trim();
+            const [unstagedResult, stagedResult] = await Promise.all([
+                execAsync('git diff --shortstat', { encoding: 'utf8' }).catch(() => ({ stdout: '' })),
+                execAsync('git diff --cached --shortstat', { encoding: 'utf8' }).catch(() => ({ stdout: '' }))
+            ]);
 
-            const stagedStat = execSync('git diff --cached --shortstat', {
-                encoding: 'utf8',
-                stdio: ['pipe', 'pipe', 'ignore']
-            }).trim();
+            const unstagedStat = unstagedResult.stdout.trim();
+            const stagedStat = stagedResult.stdout.trim();
 
             if (unstagedStat) {
                 const insertMatch = /(\d+) insertion/.exec(unstagedStat);

@@ -11,11 +11,11 @@ export class TokensInputWidget implements Widget {
     getDefaultColor(): string { return 'blue'; }
     getDescription(): string { return 'Shows input token count for the current session'; }
     getDisplayName(): string { return 'Tokens Input'; }
-    getEditorDisplay(item: WidgetItem): WidgetEditorDisplay {
+    getEditorDisplay(_item: WidgetItem): WidgetEditorDisplay {
         return { displayText: this.getDisplayName() };
     }
 
-    render(item: WidgetItem, context: RenderContext, settings: Settings): string | null {
+    render(item: WidgetItem, context: RenderContext, _settings: Settings): string | null {
         if (context.isPreview) {
             return item.rawValue ? '15.2k' : 'In: 15.2k';
         } else if (context.tokenMetrics) {
@@ -25,5 +25,5 @@ export class TokensInputWidget implements Widget {
     }
 
     supportsRawValue(): boolean { return true; }
-    supportsColors(item: WidgetItem): boolean { return true; }
+    supportsColors(_item: WidgetItem): boolean { return true; }
 }

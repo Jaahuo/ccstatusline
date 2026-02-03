@@ -40,68 +40,68 @@ describe('Block Cache Functions', () => {
     });
 
     describe('readBlockCache', () => {
-        it('should return null when cache file does not exist', () => {
-            const result = readBlockCache();
+        it('should return null when cache file does not exist', async () => {
+            const result = await readBlockCache();
             expect(result).toBeNull();
         });
 
-        it('should return cached date when cache file is valid', () => {
+        it('should return cached date when cache file is valid', async () => {
             const testDate = new Date('2025-01-26T14:00:00.000Z');
             const cachePath = getBlockCachePath();
             const cacheDir = path.dirname(cachePath);
             fs.mkdirSync(cacheDir, { recursive: true });
             fs.writeFileSync(cachePath, JSON.stringify({ startTime: testDate.toISOString() }));
 
-            const result = readBlockCache();
+            const result = await readBlockCache();
             expect(result).toEqual(testDate);
         });
 
-        it('should return null when cache file has invalid JSON', () => {
+        it('should return null when cache file has invalid JSON', async () => {
             const cachePath = getBlockCachePath();
             const cacheDir = path.dirname(cachePath);
             fs.mkdirSync(cacheDir, { recursive: true });
             fs.writeFileSync(cachePath, 'not valid json');
 
-            const result = readBlockCache();
+            const result = await readBlockCache();
             expect(result).toBeNull();
         });
 
-        it('should return null when cache file has missing startTime', () => {
+        it('should return null when cache file has missing startTime', async () => {
             const cachePath = getBlockCachePath();
             const cacheDir = path.dirname(cachePath);
             fs.mkdirSync(cacheDir, { recursive: true });
             fs.writeFileSync(cachePath, JSON.stringify({}));
 
-            const result = readBlockCache();
+            const result = await readBlockCache();
             expect(result).toBeNull();
         });
 
-        it('should return null when startTime is not a string', () => {
+        it('should return null when startTime is not a string', async () => {
             const cachePath = getBlockCachePath();
             const cacheDir = path.dirname(cachePath);
             fs.mkdirSync(cacheDir, { recursive: true });
             fs.writeFileSync(cachePath, JSON.stringify({ startTime: 12345 }));
 
-            const result = readBlockCache();
+            const result = await readBlockCache();
             expect(result).toBeNull();
         });
 
-        it('should return null when startTime is invalid date string', () => {
+        it('should return null when startTime is invalid date string', async () => {
             const cachePath = getBlockCachePath();
             const cacheDir = path.dirname(cachePath);
             fs.mkdirSync(cacheDir, { recursive: true });
             fs.writeFileSync(cachePath, JSON.stringify({ startTime: 'not a date' }));
 
-            const result = readBlockCache();
+            const result = await readBlockCache();
             expect(result).toBeNull();
         });
     });
 
     describe('writeBlockCache', () => {
-        it('should create directory and write cache file', () => {
+        it('should create directory and write cache file', async () => {
             const testDate = new Date('2025-01-26T14:00:00.000Z');
 
-            writeBlockCache(testDate);
+            await writeBlockCache(testDate);
 
             const cachePath = getBlockCachePath();
             expect(fs.existsSync(cachePath)).toBe(true);
@@ -110,12 +110,12 @@ describe('Block Cache Functions', () => {
             expect(parsed.startTime).toBe(testDate.toISOString());
         });
 
-        it('should overwrite existing cache file', () => {
+        it('should overwrite existing cache file', async () => {
             const firstDate = new Date('2025-01-26T14:00:00.000Z');
             const secondDate = new Date('2025-01-26T16:00:00.000Z');
 
-            writeBlockCache(firstDate);
-            writeBlockCache(secondDate);
+            await writeBlockCache(firstDate);
+            await writeBlockCache(secondDate);
 
             const cachePath = getBlockCachePath();
             const content = fs.readFileSync(cachePath, 'utf-8');
@@ -156,12 +156,12 @@ describe('getCachedBlockMetrics integration', () => {
         const testStartTime = new Date();
         testStartTime.setHours(testStartTime.getHours() - 2);
 
-        writeBlockCache(testStartTime);
+        await writeBlockCache(testStartTime);
 
         // Verify cache was written
         expect(fs.existsSync(getBlockCachePath())).toBe(true);
 
-        const result = getCachedBlockMetrics();
+        const result = await getCachedBlockMetrics();
 
         expect(result).not.toBeNull();
         expect(result?.startTime.getTime()).toBe(testStartTime.getTime());
@@ -174,9 +174,9 @@ describe('getCachedBlockMetrics integration', () => {
         const expiredStartTime = new Date();
         expiredStartTime.setHours(expiredStartTime.getHours() - 6);
 
-        writeBlockCache(expiredStartTime);
+        await writeBlockCache(expiredStartTime);
 
-        const result = getCachedBlockMetrics();
+        const result = await getCachedBlockMetrics();
 
         // Should return null because cache is expired and no real JSONL files exist
         expect(result).toBeNull();
@@ -185,7 +185,7 @@ describe('getCachedBlockMetrics integration', () => {
     it('should recalculate when no cache exists', async () => {
         const { getCachedBlockMetrics } = await import('../jsonl');
 
-        const result = getCachedBlockMetrics();
+        const result = await getCachedBlockMetrics();
 
         // Should return null because no cache and no real JSONL files exist
         expect(result).toBeNull();

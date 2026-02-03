@@ -1,4 +1,5 @@
-import { execSync } from 'child_process';
+import { exec } from 'node:child_process';
+import { promisify } from 'node:util';
 
 import type { RenderContext } from '../types/RenderContext';
 import type { Settings } from '../types/Settings';
@@ -8,6 +9,8 @@ import type {
     WidgetEditorDisplay,
     WidgetItem
 } from '../types/Widget';
+
+const execAsync = promisify(exec);
 
 export class GitBranchWidget implements Widget {
     getDefaultColor(): string { return 'magenta'; }
@@ -41,26 +44,24 @@ export class GitBranchWidget implements Widget {
         return null;
     }
 
-    render(item: WidgetItem, context: RenderContext, settings: Settings): string | null {
+    async render(item: WidgetItem, context: RenderContext, settings: Settings): Promise<string | null> {
         const hideNoGit = item.metadata?.hideNoGit === 'true';
 
         if (context.isPreview) {
             return item.rawValue ? 'main' : '⎇ main';
         }
 
-        const branch = this.getGitBranch();
+        const branch = await this.getGitBranch();
         if (branch)
             return item.rawValue ? branch : `⎇ ${branch}`;
 
         return hideNoGit ? null : '⎇ no git';
     }
 
-    private getGitBranch(): string | null {
+    private async getGitBranch(): Promise<string | null> {
         try {
-            const branch = execSync('git branch --show-current', {
-                encoding: 'utf8',
-                stdio: ['pipe', 'pipe', 'ignore']
-            }).trim();
+            const { stdout } = await execAsync('git branch --show-current', { encoding: 'utf8' });
+            const branch = stdout.trim();
             return branch || null;
         } catch {
             return null;

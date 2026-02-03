@@ -30,7 +30,7 @@ export function formatTokens(count: number): string {
     return count.toString();
 }
 
-function renderPowerlineStatusLine(
+async function renderPowerlineStatusLine(
     widgets: WidgetItem[],
     settings: Settings,
     context: RenderContext,
@@ -38,7 +38,7 @@ function renderPowerlineStatusLine(
     globalSeparatorOffset = 0,  // Starting separator index for this line
     preRenderedWidgets: PreRenderedWidget[],  // Pre-rendered widgets for this line
     preCalculatedMaxWidths: number[]  // Pre-calculated max widths for alignment
-): string {
+): Promise<string> {
     const powerlineConfig = settings.powerline as Record<string, unknown> | undefined;
     const config = powerlineConfig ?? {};
 
@@ -78,7 +78,7 @@ function renderPowerlineStatusLine(
     if (filteredWidgets.length === 0)
         return '';
 
-    const detectedWidth = context.terminalWidth ?? getTerminalWidth();
+    const detectedWidth = context.terminalWidth ?? await getTerminalWidth();
 
     // Calculate terminal width based on flex mode settings
     let terminalWidth: number | null = null;
@@ -497,50 +497,45 @@ export interface PreRenderedWidget {
 }
 
 // Pre-render all widgets once and cache the results
-export function preRenderAllWidgets(
+export async function preRenderAllWidgets(
     allLinesWidgets: WidgetItem[][],
     settings: Settings,
     context: RenderContext
-): PreRenderedWidget[][] {
-    const preRenderedLines: PreRenderedWidget[][] = [];
-
-    // Process each line
-    for (const lineWidgets of allLinesWidgets) {
-        const preRenderedLine: PreRenderedWidget[] = [];
-
-        for (const widget of lineWidgets) {
+): Promise<PreRenderedWidget[][]> {
+    // Process all lines in parallel
+    return Promise.all(allLinesWidgets.map(async (lineWidgets) => {
+        // Process all widgets in a line in parallel
+        const results = await Promise.all(lineWidgets.map(async (widget): Promise<PreRenderedWidget | null> => {
             // Skip separators as they're handled differently
             if (widget.type === 'separator' || widget.type === 'flex-separator') {
-                preRenderedLine.push({
+                return {
                     content: '',  // Separators are handled specially
                     plainLength: 0,
                     widget
-                });
-                continue;
+                };
             }
 
             const widgetImpl = getWidget(widget.type);
             if (!widgetImpl) {
                 // Unknown widget type - skip it entirely
-                continue;
+                return null;
             }
 
-            const widgetText = widgetImpl.render(widget, context, settings) ?? '';
+            const widgetText = await widgetImpl.render(widget, context, settings) ?? '';
 
             // Store the rendered content without padding (padding is applied later)
             // Use stringWidth to properly calculate Unicode character display width
             const plainLength = stringWidth(widgetText.replace(ANSI_REGEX, ''));
-            preRenderedLine.push({
+            return {
                 content: widgetText,
                 plainLength,
                 widget
-            });
-        }
+            };
+        }));
 
-        preRenderedLines.push(preRenderedLine);
-    }
-
-    return preRenderedLines;
+        // Filter out null results (unknown widget types)
+        return results.filter((result): result is PreRenderedWidget => result !== null);
+    }));
 }
 
 // Calculate max widths from pre-rendered widgets for alignment
@@ -599,26 +594,26 @@ export function calculateMaxWidthsFromPreRendered(
     return maxWidths;
 }
 
-export function renderStatusLineWithInfo(
+export async function renderStatusLineWithInfo(
     widgets: WidgetItem[],
     settings: Settings,
     context: RenderContext,
     preRenderedWidgets: PreRenderedWidget[],
     preCalculatedMaxWidths: number[]
-): RenderResult {
-    const line = renderStatusLine(widgets, settings, context, preRenderedWidgets, preCalculatedMaxWidths);
+): Promise<RenderResult> {
+    const line = await renderStatusLine(widgets, settings, context, preRenderedWidgets, preCalculatedMaxWidths);
     // Check if line contains the truncation ellipsis
     const wasTruncated = line.includes('...');
     return { line, wasTruncated };
 }
 
-export function renderStatusLine(
+export async function renderStatusLine(
     widgets: WidgetItem[],
     settings: Settings,
     context: RenderContext,
     preRenderedWidgets: PreRenderedWidget[],
     preCalculatedMaxWidths: number[]
-): string {
+): Promise<string> {
     // Force 24-bit color for non-preview statusline rendering
     // Chalk level is now set globally in ccstatusline.ts and tui.tsx
     // No need to override here
@@ -632,7 +627,7 @@ export function renderStatusLine(
 
     // If powerline mode is enabled, use powerline renderer
     if (isPowerlineMode)
-        return renderPowerlineStatusLine(widgets, settings, context, context.lineIndex ?? 0, context.globalSeparatorIndex ?? 0, preRenderedWidgets, preCalculatedMaxWidths);
+        return await renderPowerlineStatusLine(widgets, settings, context, context.lineIndex ?? 0, context.globalSeparatorIndex ?? 0, preRenderedWidgets, preCalculatedMaxWidths);
 
     // Helper to apply colors with optional background and bold override
     const applyColorsWithOverride = (text: string, foregroundColor?: string, backgroundColor?: string, bold?: boolean): string => {
@@ -652,7 +647,7 @@ export function renderStatusLine(
         return applyColors(text, fgColor, bgColor, shouldBold, colorLevel);
     };
 
-    const detectedWidth = context.terminalWidth ?? getTerminalWidth();
+    const detectedWidth = context.terminalWidth ?? await getTerminalWidth();
 
     // Calculate terminal width based on flex mode settings
     let terminalWidth: number | null = null;

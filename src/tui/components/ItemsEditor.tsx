@@ -3,7 +3,10 @@ import {
     Text,
     useInput
 } from 'ink';
-import React, { useState } from 'react';
+import React, {
+    useEffect,
+    useState
+} from 'react';
 
 import type { Settings } from '../../types/Settings';
 import type {
@@ -31,7 +34,13 @@ export const ItemsEditor: React.FC<ItemsEditorProps> = ({ widgets, onUpdate, onB
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [moveMode, setMoveMode] = useState(false);
     const [customEditorWidget, setCustomEditorWidget] = useState<{ widget: WidgetItem; impl: Widget; action?: string } | null>(null);
+    const [widthDetectionAvailable, setWidthDetectionAvailable] = useState(false);
     const separatorChars = ['|', '-', ',', ' '];
+
+    // Check terminal width detection availability
+    useEffect(() => {
+        void canDetectTerminalWidth().then(setWidthDetectionAvailable);
+    }, []);
 
     // Determine which item types are allowed based on settings
     const getAllowedTypes = (): WidgetItemType[] => {
@@ -317,7 +326,6 @@ export const ItemsEditor: React.FC<ItemsEditorProps> = ({ widgets, onUpdate, onB
     };
 
     const hasFlexSeparator = widgets.some(widget => widget.type === 'flex-separator');
-    const widthDetectionAvailable = canDetectTerminalWidth();
 
     // Build dynamic help text based on selected item
     const currentWidget = widgets[selectedIndex];

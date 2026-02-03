@@ -1,9 +1,9 @@
-import { execSync } from 'child_process';
 import {
     Box,
     Text,
     useInput
 } from 'ink';
+import { spawn } from 'node:child_process';
 import React, { useState } from 'react';
 
 import type { RenderContext } from '../types/RenderContext';
@@ -15,6 +15,57 @@ import type {
     WidgetEditorProps,
     WidgetItem
 } from '../types/Widget';
+
+function execWithInput(command: string, input: string, timeout: number): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const child = spawn(command, [], {
+            shell: true,
+            stdio: ['pipe', 'pipe', 'pipe'],
+            env: process.env
+        });
+
+        let stdout = '';
+        let stderr = '';
+        let killed = false;
+
+        const timer = setTimeout(() => {
+            killed = true;
+            child.kill('SIGTERM');
+            reject(Object.assign(new Error('Timeout'), { code: 'ETIMEDOUT' }));
+        }, timeout);
+
+        child.stdout.on('data', (data: Buffer) => {
+            stdout += data.toString();
+        });
+
+        child.stderr.on('data', (data: Buffer) => {
+            stderr += data.toString();
+        });
+
+        child.on('error', (err: NodeJS.ErrnoException) => {
+            clearTimeout(timer);
+            reject(err);
+        });
+
+        child.on('close', (code, signal) => {
+            clearTimeout(timer);
+            if (killed)
+                return;
+
+            if (signal) {
+                reject(Object.assign(new Error(`Signal: ${signal}`), { signal }));
+            } else if (code !== 0) {
+                reject(Object.assign(new Error(stderr || `Exit code ${code}`), { status: code }));
+            } else {
+                resolve(stdout);
+            }
+        });
+
+        // Write input to stdin and close it
+        child.stdin.write(input);
+        child.stdin.end();
+    });
+}
 
 export class CustomCommandWidget implements Widget {
     getDefaultColor(): string { return 'white'; }
@@ -51,20 +102,16 @@ export class CustomCommandWidget implements Widget {
         return null;
     }
 
-    render(item: WidgetItem, context: RenderContext, settings: Settings): string | null {
+    async render(item: WidgetItem, context: RenderContext, settings: Settings): Promise<string | null> {
         if (context.isPreview) {
             return item.commandPath ? `[cmd: ${item.commandPath.substring(0, 20)}${item.commandPath.length > 20 ? '...' : ''}]` : '[No command]';
         } else if (item.commandPath && context.data) {
             try {
                 const timeout = item.timeout ?? 1000;
                 const jsonInput = JSON.stringify(context.data);
-                let output = execSync(item.commandPath, {
-                    encoding: 'utf8',
-                    input: jsonInput,
-                    timeout: timeout,
-                    stdio: ['pipe', 'pipe', 'ignore'],
-                    env: process.env
-                }).trim();
+
+                const stdout = await execWithInput(item.commandPath, jsonInput, timeout);
+                let output = stdout.trim();
 
                 // Strip ANSI codes if preserveColors is false
                 if (!item.preserveColors) {

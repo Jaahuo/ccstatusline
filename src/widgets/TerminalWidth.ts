@@ -15,8 +15,8 @@ export class TerminalWidthWidget implements Widget {
         return { displayText: this.getDisplayName() };
     }
 
-    render(item: WidgetItem, context: RenderContext, settings: Settings): string | null {
-        const width = context.terminalWidth ?? getTerminalWidth();
+    async render(item: WidgetItem, context: RenderContext, settings: Settings): Promise<string | null> {
+        const width = context.terminalWidth ?? await getTerminalWidth();
         if (context.isPreview) {
             const detectedWidth = width ?? '??';
             return item.rawValue ? `${detectedWidth}` : `Term: ${detectedWidth}`;

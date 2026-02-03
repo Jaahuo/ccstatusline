@@ -1,7 +1,10 @@
-import { execSync } from 'child_process';
 import * as fs from 'fs';
+import { exec } from 'node:child_process';
+import { promisify } from 'node:util';
 import * as os from 'os';
 import * as path from 'path';
+
+const execAsync = promisify(exec);
 
 import type { ClaudeSettings } from '../types/ClaudeSettings';
 
@@ -98,11 +101,11 @@ export async function isInstalled(): Promise<boolean> {
     );
 }
 
-export function isBunxAvailable(): boolean {
+export async function isBunxAvailable(): Promise<boolean> {
     try {
         // Use platform-appropriate command to check for bunx availability
         const command = process.platform === 'win32' ? 'where bunx' : 'which bunx';
-        execSync(command, { stdio: 'ignore' });
+        await execAsync(command);
         return true;
     } catch {
         return false;

@@ -1,6 +1,9 @@
-import { execSync } from 'child_process';
 import * as fs from 'fs';
+import { exec } from 'node:child_process';
+import { promisify } from 'node:util';
 import * as path from 'path';
+
+const execAsync = promisify(exec);
 
 // Get package version
 // __PACKAGE_VERSION__ will be replaced at build time
@@ -33,26 +36,26 @@ export function getPackageVersion(): string {
 }
 
 // Get terminal width
-export function getTerminalWidth(): number | null {
+export async function getTerminalWidth(): Promise<number | null> {
     try {
         // First try to get the tty of the parent process
-        const tty = execSync('ps -o tty= -p $(ps -o ppid= -p $$)', {
+        const { stdout: ttyOutput } = await execAsync('ps -o tty= -p $(ps -o ppid= -p $$)', {
             encoding: 'utf8',
-            stdio: ['pipe', 'pipe', 'ignore'],
             shell: '/bin/sh'
-        }).trim();
+        });
+        const tty = ttyOutput.trim();
 
         // Check if we got a valid tty (not ?? which means no tty)
         if (tty && tty !== '??' && tty !== '?') {
             // Now get the terminal size
-            const width = execSync(
+            const { stdout: widthOutput } = await execAsync(
                 `stty size < /dev/${tty} | awk '{print $2}'`,
                 {
                     encoding: 'utf8',
-                    stdio: ['pipe', 'pipe', 'ignore'],
                     shell: '/bin/sh'
                 }
-            ).trim();
+            );
+            const width = widthOutput.trim();
 
             const parsed = parseInt(width, 10);
             if (!isNaN(parsed) && parsed > 0) {
@@ -65,10 +68,8 @@ export function getTerminalWidth(): number | null {
 
     // Fallback: try tput cols which might work in some environments
     try {
-        const width = execSync('tput cols 2>/dev/null', {
-            encoding: 'utf8',
-            stdio: ['pipe', 'pipe', 'ignore']
-        }).trim();
+        const { stdout } = await execAsync('tput cols 2>/dev/null', { encoding: 'utf8' });
+        const width = stdout.trim();
 
         const parsed = parseInt(width, 10);
         if (!isNaN(parsed) && parsed > 0) {
@@ -82,25 +83,25 @@ export function getTerminalWidth(): number | null {
 }
 
 // Check if terminal width detection is available
-export function canDetectTerminalWidth(): boolean {
+export async function canDetectTerminalWidth(): Promise<boolean> {
     try {
         // First try to get the tty of the parent process
-        const tty = execSync('ps -o tty= -p $(ps -o ppid= -p $$)', {
+        const { stdout: ttyOutput } = await execAsync('ps -o tty= -p $(ps -o ppid= -p $$)', {
             encoding: 'utf8',
-            stdio: ['pipe', 'pipe', 'ignore'],
             shell: '/bin/sh'
-        }).trim();
+        });
+        const tty = ttyOutput.trim();
 
         // Check if we got a valid tty
         if (tty && tty !== '??' && tty !== '?') {
-            const width = execSync(
+            const { stdout: widthOutput } = await execAsync(
                 `stty size < /dev/${tty} | awk '{print $2}'`,
                 {
                     encoding: 'utf8',
-                    stdio: ['pipe', 'pipe', 'ignore'],
                     shell: '/bin/sh'
                 }
-            ).trim();
+            );
+            const width = widthOutput.trim();
 
             const parsed = parseInt(width, 10);
             if (!isNaN(parsed) && parsed > 0) {
@@ -113,10 +114,8 @@ export function canDetectTerminalWidth(): boolean {
 
     // Fallback: try tput cols
     try {
-        const width = execSync('tput cols 2>/dev/null', {
-            encoding: 'utf8',
-            stdio: ['pipe', 'pipe', 'ignore']
-        }).trim();
+        const { stdout } = await execAsync('tput cols 2>/dev/null', { encoding: 'utf8' });
+        const width = stdout.trim();
 
         const parsed = parseInt(width, 10);
         return !isNaN(parsed) && parsed > 0;

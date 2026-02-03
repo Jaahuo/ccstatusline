@@ -25,7 +25,7 @@ export class CustomTextWidget implements Widget {
         return { displayText: `${this.getDisplayName()} (${text})` };
     }
 
-    render(item: WidgetItem, context: RenderContext, settings: Settings): string | null {
+    render(item: WidgetItem, _context: RenderContext, _settings: Settings): string | null {
         return item.customText ?? '';
     }
 
@@ -42,7 +42,7 @@ export class CustomTextWidget implements Widget {
     }
 
     supportsRawValue(): boolean { return false; }
-    supportsColors(item: WidgetItem): boolean { return true; }
+    supportsColors(_item: WidgetItem): boolean { return true; }
 }
 
 const CustomTextEditor: React.FC<WidgetEditorProps> = ({ widget, onComplete, onCancel }) => {

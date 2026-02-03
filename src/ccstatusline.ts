@@ -87,7 +87,7 @@ async function renderMultipleLines(data: StatusJSON) {
 
     let blockMetrics: BlockMetrics | null = null;
     if (hasBlockTimer) {
-        blockMetrics = getCachedBlockMetrics();
+        blockMetrics = await getCachedBlockMetrics();
     }
 
     // Create render context
@@ -100,7 +100,7 @@ async function renderMultipleLines(data: StatusJSON) {
     };
 
     // Always pre-render all widgets once (for efficiency)
-    const preRenderedLines = preRenderAllWidgets(lines, settings, context);
+    const preRenderedLines = await preRenderAllWidgets(lines, settings, context);
     const preCalculatedMaxWidths = calculateMaxWidthsFromPreRendered(preRenderedLines, settings);
 
     // Render each line using pre-rendered content
@@ -110,7 +110,7 @@ async function renderMultipleLines(data: StatusJSON) {
         if (lineItems && lineItems.length > 0) {
             const lineContext = { ...context, lineIndex: i, globalSeparatorIndex };
             const preRenderedWidgets = preRenderedLines[i] ?? [];
-            const line = renderStatusLine(lineItems, settings, lineContext, preRenderedWidgets, preCalculatedMaxWidths);
+            const line = await renderStatusLine(lineItems, settings, lineContext, preRenderedWidgets, preCalculatedMaxWidths);
 
             // Only output the line if it has content (not just ANSI codes)
             // Strip ANSI codes to check if there's actual text

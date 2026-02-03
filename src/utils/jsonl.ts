@@ -1,18 +1,16 @@
-import * as fs from 'fs';
+import {
+    mkdir,
+    readFile,
+    stat,
+    writeFile
+} from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { globSync } from 'tinyglobby';
+import { glob } from 'tinyglobby';
 
 import type { BlockMetrics } from '../types';
 
 import { getClaudeConfigDir } from './claude-settings';
-
-// Ensure fs compatibility for older Node versions
-const readFileSync = fs.readFileSync;
-const statSync = fs.statSync;
-const writeFileSync = fs.writeFileSync;
-const mkdirSync = fs.mkdirSync;
-const existsSync = fs.existsSync;
 
 // --- Block Cache Functions ---
 
@@ -29,13 +27,10 @@ export function getBlockCachePath(): string {
  * Reads the block cache file and returns the cached start time
  * Returns null if cache doesn't exist or is invalid
  */
-export function readBlockCache(): Date | null {
+export async function readBlockCache(): Promise<Date | null> {
     try {
         const cachePath = getBlockCachePath();
-        if (!existsSync(cachePath)) {
-            return null;
-        }
-        const content = readFileSync(cachePath, 'utf-8');
+        const content = await readFile(cachePath, 'utf-8');
         const cache = JSON.parse(content) as BlockCache;
         if (typeof cache.startTime !== 'string') {
             return null;
@@ -54,15 +49,13 @@ export function readBlockCache(): Date | null {
  * Writes the block start time to the cache file
  * Creates the cache directory if it doesn't exist
  */
-export function writeBlockCache(startTime: Date): void {
+export async function writeBlockCache(startTime: Date): Promise<void> {
     try {
         const cachePath = getBlockCachePath();
         const cacheDir = path.dirname(cachePath);
-        if (!existsSync(cacheDir)) {
-            mkdirSync(cacheDir, { recursive: true });
-        }
+        await mkdir(cacheDir, { recursive: true });
         const cache: BlockCache = { startTime: startTime.toISOString() };
-        writeFileSync(cachePath, JSON.stringify(cache), 'utf-8');
+        await writeFile(cachePath, JSON.stringify(cache), 'utf-8');
     } catch {
         // Silently fail - caching is best-effort
     }
@@ -72,12 +65,12 @@ export function writeBlockCache(startTime: Date): void {
  * Gets block metrics with caching support
  * Returns cached result if still valid, otherwise recalculates
  */
-export function getCachedBlockMetrics(sessionDurationHours = 5): BlockMetrics | null {
+export async function getCachedBlockMetrics(sessionDurationHours = 5): Promise<BlockMetrics | null> {
     const sessionDurationMs = sessionDurationHours * 60 * 60 * 1000;
     const now = new Date();
 
     // Check cache first
-    const cachedStartTime = readBlockCache();
+    const cachedStartTime = await readBlockCache();
     if (cachedStartTime) {
         const blockEndTime = new Date(cachedStartTime.getTime() + sessionDurationMs);
         if (now.getTime() <= blockEndTime.getTime()) {
@@ -91,11 +84,11 @@ export function getCachedBlockMetrics(sessionDurationHours = 5): BlockMetrics | 
     }
 
     // Cache miss or expired - run full calculation
-    const metrics = getBlockMetrics();
+    const metrics = await getBlockMetrics();
 
     // Write to cache if we found a valid block
     if (metrics) {
-        writeBlockCache(metrics.startTime);
+        await writeBlockCache(metrics.startTime);
     }
 
     return metrics;
@@ -104,14 +97,14 @@ export function getCachedBlockMetrics(sessionDurationHours = 5): BlockMetrics | 
 /**
  * Gets block metrics for the current 5-hour block from JSONL files
  */
-export function getBlockMetrics(): BlockMetrics | null {
+export async function getBlockMetrics(): Promise<BlockMetrics | null> {
     const claudeDir: string | null = getClaudeConfigDir();
 
     if (!claudeDir)
         return null;
 
     try {
-        return findMostRecentBlockStartTime(claudeDir);
+        return await findMostRecentBlockStartTime(claudeDir);
     } catch {
         return null;
     }
@@ -121,17 +114,17 @@ export function getBlockMetrics(): BlockMetrics | null {
  * Efficiently finds the most recent 5-hour block start time from JSONL files
  * Uses file modification times as hints to avoid unnecessary reads
  */
-function findMostRecentBlockStartTime(
+async function findMostRecentBlockStartTime(
     rootDir: string,
     sessionDurationHours = 5
-): BlockMetrics | null {
+): Promise<BlockMetrics | null> {
     const sessionDurationMs = sessionDurationHours * 60 * 60 * 1000;
     const now = new Date();
 
     // Step 1: Find all JSONL files with their modification times
     // Use forward slashes for glob patterns on all platforms (tinyglobby requirement)
     const pattern = path.posix.join(rootDir.replace(/\\/g, '/'), 'projects', '**', '*.jsonl');
-    const files = globSync([pattern], {
+    const files = await glob([pattern], {
         absolute: true,  // Ensure we get absolute paths
         cwd: rootDir     // Set working directory to rootDir
     });
@@ -140,10 +133,10 @@ function findMostRecentBlockStartTime(
         return null;
 
     // Step 2: Get file stats and sort by modification time (most recent first)
-    const filesWithStats = files.map((file) => {
-        const stats = statSync(file);
+    const filesWithStats = await Promise.all(files.map(async (file) => {
+        const stats = await stat(file);
         return { file, mtime: stats.mtime };
-    });
+    }));
 
     filesWithStats.sort((a, b) => b.mtime.getTime() - a.mtime.getTime());
 
@@ -169,7 +162,7 @@ function findMostRecentBlockStartTime(
             if (mtime.getTime() < cutoffTime.getTime()) {
                 break;
             }
-            const fileTimestamps = getAllTimestampsFromFile(file);
+            const fileTimestamps = await getAllTimestampsFromFile(file);
             timestamps.push(...fileTimestamps);
         }
 
@@ -269,10 +262,10 @@ function findMostRecentBlockStartTime(
 /**
  * Gets all timestamps from a JSONL file
  */
-function getAllTimestampsFromFile(filePath: string): Date[] {
+async function getAllTimestampsFromFile(filePath: string): Promise<Date[]> {
     const timestamps: Date[] = [];
     try {
-        const content = readFileSync(filePath, 'utf-8');
+        const content = await readFile(filePath, 'utf-8');
         const lines = content.trim().split('\n').filter(line => line.length > 0);
 
         for (const line of lines) {
