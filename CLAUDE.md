@@ -75,12 +75,11 @@ The project has dual runtime compatibility - works with both Bun and Node.js:
   - Sonnet 4.5 WITHOUT [1m] suffix: 200k tokens (160k usable at 80%)
   - Legacy models: 200k tokens (160k usable at 80%)
 - **input-parsers.ts**: Parses token metrics from status JSON input
-  - `extractTokenMetricsFromContextWindow()`: Primary method for extracting token metrics from the `context_window` object
+  - `extractTokenMetricsFromContextWindow()`: Extracts token metrics from the `context_window` object
   - `formatDurationMs()`: Formats duration in milliseconds to human-readable string
-- **jsonl.ts**: Fallback JSONL transcript parsing (used when `context_window` is not available in status JSON)
-  - `getTokenMetrics()`: Parses transcript files to calculate token usage
-  - `getSessionDuration()`: Calculates session duration from transcript timestamps
+- **jsonl.ts**: JSONL transcript parsing for block metrics
   - `getBlockMetrics()`: Gets 5-hour block metrics from JSONL files
+  - `getCachedBlockMetrics()`: Cached version of getBlockMetrics for performance
 
 ### Widgets (src/widgets/)
 
@@ -119,7 +118,7 @@ All widgets must implement:
 ## Key Implementation Details
 
 - **Cross-platform stdin reading**: Detects Bun vs Node.js environment and uses appropriate stdin API
-- **Token metrics**: Primarily extracted from `context_window` object in the status JSON input; falls back to parsing JSONL transcript files if `context_window` is not available
+- **Token metrics**: Extracted from `context_window` object in the status JSON input
 - **Git integration**: Uses child_process.execSync to get current branch and changes
 - **Terminal width management**: Three modes for handling width (full, full-minus-40, full-until-compact)
 - **Flex separators**: Special separator type that expands to fill available space
@@ -155,7 +154,7 @@ Default to using Bun instead of Node.js:
   - Model context detection (src/utils/**tests**/model-context.test.ts)
   - Input parsing and token metrics extraction (src/utils/**tests**/input-parsers.test.ts)
   - Context percentage calculations (src/utils/**tests**/context-percentage.test.ts)
-  - JSONL transcript parsing fallback (src/utils/**tests**/jsonl.test.ts)
+  - JSONL block metrics parsing (src/utils/**tests**/jsonl.test.ts)
   - Widget rendering (src/widgets/**tests**/\*.test.ts)
   - Run tests with `bun test` or `bun test --watch` for watch mode
   - Test configuration: vitest.config.ts

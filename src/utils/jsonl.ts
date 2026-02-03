@@ -2,27 +2,17 @@ import * as fs from 'fs';
 import os from 'node:os';
 import path from 'node:path';
 import { globSync } from 'tinyglobby';
-import { promisify } from 'util';
 
-import type {
-    BlockMetrics,
-    TokenMetrics,
-    TranscriptLine
-} from '../types';
+import type { BlockMetrics } from '../types';
 
 import { getClaudeConfigDir } from './claude-settings';
-import { formatDurationMs } from './input-parsers';
-import { getContextConfig } from './model-context';
 
-// Ensure fs.promises compatibility for older Node versions
-const readFile = promisify(fs.readFile);
+// Ensure fs compatibility for older Node versions
 const readFileSync = fs.readFileSync;
 const statSync = fs.statSync;
 const writeFileSync = fs.writeFileSync;
 const mkdirSync = fs.mkdirSync;
 const existsSync = fs.existsSync;
-
-export { formatDurationMs };
 
 // --- Block Cache Functions ---
 
@@ -109,124 +99,6 @@ export function getCachedBlockMetrics(sessionDurationHours = 5): BlockMetrics | 
     }
 
     return metrics;
-}
-
-export async function getSessionDuration(transcriptPath: string): Promise<string | null> {
-    try {
-        if (!fs.existsSync(transcriptPath)) {
-            return null;
-        }
-
-        const content = await readFile(transcriptPath, 'utf-8');
-        const lines = content.trim().split('\n').filter((line: string) => line.trim());
-
-        if (lines.length === 0) {
-            return null;
-        }
-
-        let firstTimestamp: Date | null = null;
-        let lastTimestamp: Date | null = null;
-
-        // Find first valid timestamp
-        for (const line of lines) {
-            try {
-                const data = JSON.parse(line) as { timestamp?: string };
-                if (data.timestamp) {
-                    firstTimestamp = new Date(data.timestamp);
-                    break;
-                }
-            } catch {
-                // Skip invalid lines
-            }
-        }
-
-        // Find last valid timestamp (iterate backwards)
-        for (let i = lines.length - 1; i >= 0; i--) {
-            try {
-                const data = JSON.parse(lines[i] ?? '') as { timestamp?: string };
-                if (data.timestamp) {
-                    lastTimestamp = new Date(data.timestamp);
-                    break;
-                }
-            } catch {
-                // Skip invalid lines
-            }
-        }
-
-        if (!firstTimestamp || !lastTimestamp) {
-            return null;
-        }
-
-        // Calculate duration in milliseconds
-        const durationMs = lastTimestamp.getTime() - firstTimestamp.getTime();
-
-        return formatDurationMs(durationMs);
-    } catch {
-        return null;
-    }
-}
-
-export async function getTokenMetrics(transcriptPath: string, modelId?: string): Promise<TokenMetrics> {
-    const contextWindowSize = getContextConfig(modelId);
-
-    try {
-        // Use Node.js-compatible file reading
-        if (!fs.existsSync(transcriptPath)) {
-            return { inputTokens: 0, outputTokens: 0, cachedTokens: 0, totalTokens: 0, contextLength: 0, contextWindowSize, usedPercentage: 0, remainingPercentage: 100 };
-        }
-
-        const content = await readFile(transcriptPath, 'utf-8');
-        const lines = content.trim().split('\n');
-
-        let inputTokens = 0;
-        let outputTokens = 0;
-        let cachedTokens = 0;
-        let contextLength = 0;
-
-        // Parse each line and sum up token usage for totals
-        let mostRecentMainChainEntry: TranscriptLine | null = null;
-        let mostRecentTimestamp: Date | null = null;
-
-        for (const line of lines) {
-            try {
-                const data = JSON.parse(line) as TranscriptLine;
-                if (data.message?.usage) {
-                    inputTokens += data.message.usage.input_tokens || 0;
-                    outputTokens += data.message.usage.output_tokens || 0;
-                    cachedTokens += data.message.usage.cache_read_input_tokens ?? 0;
-                    cachedTokens += data.message.usage.cache_creation_input_tokens ?? 0;
-
-                    // Track the most recent entry with isSidechain: false (or undefined, which defaults to main chain)
-                    // Also skip API error messages (synthetic messages with 0 tokens)
-                    if (data.isSidechain !== true && data.timestamp && !data.isApiErrorMessage) {
-                        const entryTime = new Date(data.timestamp);
-                        if (!mostRecentTimestamp || entryTime > mostRecentTimestamp) {
-                            mostRecentTimestamp = entryTime;
-                            mostRecentMainChainEntry = data;
-                        }
-                    }
-                }
-            } catch {
-                // Skip invalid JSON lines
-            }
-        }
-
-        // Calculate context length from the most recent main chain message
-        if (mostRecentMainChainEntry?.message?.usage) {
-            const usage = mostRecentMainChainEntry.message.usage;
-            contextLength = (usage.input_tokens || 0)
-                + (usage.cache_read_input_tokens ?? 0)
-                + (usage.cache_creation_input_tokens ?? 0);
-        }
-
-        const totalTokens = inputTokens + outputTokens + cachedTokens;
-        const usedPercentage = Math.min(100, contextLength / contextWindowSize * 100);
-        const remainingPercentage = Math.max(0, 100 - usedPercentage);
-
-        return { inputTokens, outputTokens, cachedTokens, totalTokens, contextLength, contextWindowSize, usedPercentage, remainingPercentage };
-    } catch {
-        return { inputTokens: 0, outputTokens: 0, cachedTokens: 0, totalTokens: 0, contextLength: 0, contextWindowSize, usedPercentage: 0, remainingPercentage: 100 };
-    }
 }
 
 /**

@@ -18,11 +18,7 @@ import {
     extractTokenMetricsFromContextWindow,
     formatDurationMs
 } from './utils/input-parsers';
-import {
-    getCachedBlockMetrics,
-    getSessionDuration,
-    getTokenMetrics
-} from './utils/jsonl';
+import { getCachedBlockMetrics } from './utils/jsonl';
 import {
     calculateMaxWidthsFromPreRendered,
     preRenderAllWidgets,
@@ -80,23 +76,13 @@ async function renderMultipleLines(data: StatusJSON) {
     const hasBlockTimer = lines.some(line => line.some(item => item.type === 'block-timer'));
 
     let tokenMetrics: TokenMetrics | null = null;
-    if (hasTokenItems) {
-        if (data.context_window) {
-            tokenMetrics = extractTokenMetricsFromContextWindow(data.context_window, data.model?.id);
-        } else if (data.transcript_path) {
-            // Fallback to calculating from transcript
-            tokenMetrics = await getTokenMetrics(data.transcript_path, data.model?.id);
-        }
+    if (hasTokenItems && data.context_window) {
+        tokenMetrics = extractTokenMetricsFromContextWindow(data.context_window, data.model?.id);
     }
 
     let sessionDuration: string | null = null;
-    if (hasSessionClock) {
-        if (data.cost?.total_duration_ms !== undefined) {
-            sessionDuration = formatDurationMs(data.cost.total_duration_ms);
-        } else if (data.transcript_path) {
-            // Fallback to calculating from transcript
-            sessionDuration = await getSessionDuration(data.transcript_path);
-        }
+    if (hasSessionClock && data.cost?.total_duration_ms !== undefined) {
+        sessionDuration = formatDurationMs(data.cost.total_duration_ms);
     }
 
     let blockMetrics: BlockMetrics | null = null;
