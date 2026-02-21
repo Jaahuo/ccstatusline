@@ -114,7 +114,7 @@ export class CurrentWorkingDirWidget implements Widget {
                 previewPath = '~/D/P/my-project';
             } else if (abbreviateHome && segments && segments > 0) {
                 if (segments === 1) {
-                    previewPath = '.../my-project';
+                    previewPath = '~/.../my-project';
                 } else {
                     previewPath = '~/.../Projects/my-project';
                 }
@@ -161,7 +161,7 @@ export class CurrentWorkingDirWidget implements Widget {
                     // Take the last N segments and join with the detected separator
                     const selectedSegments = filteredParts.slice(-segments);
                     // Preserve ~ prefix when combined with segments
-                    const prefix = displayPath.startsWith('~') ? '~/' : '';
+                    const prefix = displayPath.startsWith('~') ? `~${outSep}` : '';
                     displayPath = prefix + '...' + outSep + selectedSegments.join(outSep);
                 }
             }
@@ -187,7 +187,15 @@ export class CurrentWorkingDirWidget implements Widget {
 
     private abbreviateHomeDir(path: string): string {
         const homeDir = os.homedir();
+        if (path === homeDir) {
+            return '~';
+        }
+
         if (path.startsWith(homeDir)) {
+            const boundaryChar = path[homeDir.length];
+            if (boundaryChar !== '/' && boundaryChar !== '\\') {
+                return path;
+            }
             return '~' + path.slice(homeDir.length);
         }
         return path;

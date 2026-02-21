@@ -1,8 +1,10 @@
 import * as os from 'node:os';
 import {
+    afterEach,
     describe,
     expect,
-    it
+    it,
+    vi
 } from 'vitest';
 
 import type { RenderContext } from '../../types/RenderContext';
@@ -13,6 +15,10 @@ import { CurrentWorkingDirWidget } from '../CurrentWorkingDir';
 describe('CurrentWorkingDirWidget', () => {
     const widget = new CurrentWorkingDirWidget();
     const homeDir = os.homedir();
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
 
     const createContext = (cwd?: string, isPreview = false): RenderContext => ({
         data: cwd ? { cwd } : undefined,
@@ -80,6 +86,19 @@ describe('CurrentWorkingDirWidget', () => {
             expect(result).toBe('/var/log/app');
         });
 
+        it('should not abbreviate non-home sibling paths with shared prefix', () => {
+            vi.spyOn(os, 'homedir').mockReturnValue('/Users/al');
+
+            const item = createItem({ abbreviateHome: 'true' }, true);
+            const result = widget.render(
+                item,
+                createContext('/Users/alex/project'),
+                defaultSettings
+            );
+
+            expect(result).toBe('/Users/alex/project');
+        });
+
         it('should combine with segments option', () => {
             const item = createItem({ abbreviateHome: 'true', segments: '2' }, true);
             const result = widget.render(
@@ -108,6 +127,29 @@ describe('CurrentWorkingDirWidget', () => {
                 defaultSettings
             );
             expect(result).toBe('~/.../Projects/my-project');
+        });
+
+        it('should show correct preview when abbreviateHome and one segment are enabled', () => {
+            const item = createItem({ abbreviateHome: 'true', segments: '1' }, true);
+            const result = widget.render(
+                item,
+                createContext(undefined, true),
+                defaultSettings
+            );
+            expect(result).toBe('~/.../my-project');
+        });
+
+        it('should preserve windows path separators when combining home abbreviation and segments', () => {
+            vi.spyOn(os, 'homedir').mockReturnValue('C:\\Users\\alice');
+
+            const item = createItem({ abbreviateHome: 'true', segments: '2' }, true);
+            const result = widget.render(
+                item,
+                createContext('C:\\Users\\alice\\Documents\\Projects\\app'),
+                defaultSettings
+            );
+
+            expect(result).toBe('~\\...\\Projects\\app');
         });
     });
 
