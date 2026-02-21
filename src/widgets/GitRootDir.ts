@@ -11,10 +11,10 @@ import {
     runGit
 } from '../utils/git';
 
-export class GitBranchWidget implements Widget {
-    getDefaultColor(): string { return 'magenta'; }
-    getDescription(): string { return 'Shows the current git branch name'; }
-    getDisplayName(): string { return 'Git Branch'; }
+export class GitRootDirWidget implements Widget {
+    getDefaultColor(): string { return 'cyan'; }
+    getDescription(): string { return 'Shows the git repository root directory name'; }
+    getDisplayName(): string { return 'Git Root Dir'; }
     getCategory(): string { return 'Git'; }
     getEditorDisplay(item: WidgetItem): WidgetEditorDisplay {
         const hideNoGit = item.metadata?.hideNoGit === 'true';
@@ -44,26 +44,35 @@ export class GitBranchWidget implements Widget {
         return null;
     }
 
-    render(item: WidgetItem, context: RenderContext, settings: Settings): string | null {
+    render(item: WidgetItem, context: RenderContext, _settings: Settings): string | null {
         const hideNoGit = item.metadata?.hideNoGit === 'true';
 
         if (context.isPreview) {
-            return item.rawValue ? 'main' : '⎇ main';
+            return 'my-repo';
         }
 
         if (!isInsideGitWorkTree(context)) {
-            return hideNoGit ? null : '⎇ no git';
+            return hideNoGit ? null : 'no git';
         }
 
-        const branch = this.getGitBranch(context);
-        if (branch)
-            return item.rawValue ? branch : `⎇ ${branch}`;
+        const rootDir = this.getGitRootDir(context);
+        if (rootDir) {
+            return this.getRootDirName(rootDir);
+        }
 
-        return hideNoGit ? null : '⎇ no git';
+        return hideNoGit ? null : 'no git';
     }
 
-    private getGitBranch(context: RenderContext): string | null {
-        return runGit('branch --show-current', context);
+    private getGitRootDir(context: RenderContext): string | null {
+        return runGit('rev-parse --show-toplevel', context);
+    }
+
+    private getRootDirName(rootDir: string): string {
+        const trimmedRootDir = rootDir.replace(/[\\/]+$/, '');
+        const normalizedRootDir = trimmedRootDir.length > 0 ? trimmedRootDir : rootDir;
+        const parts = normalizedRootDir.split(/[\\/]/).filter(Boolean);
+        const lastPart = parts[parts.length - 1];
+        return lastPart && lastPart.length > 0 ? lastPart : normalizedRootDir;
     }
 
     getCustomKeybinds(): CustomKeybind[] {
@@ -72,6 +81,6 @@ export class GitBranchWidget implements Widget {
         ];
     }
 
-    supportsRawValue(): boolean { return true; }
+    supportsRawValue(): boolean { return false; }
     supportsColors(item: WidgetItem): boolean { return true; }
 }

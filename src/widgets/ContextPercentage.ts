@@ -12,6 +12,7 @@ export class ContextPercentageWidget implements Widget {
     getDefaultColor(): string { return 'blue'; }
     getDescription(): string { return 'Shows percentage of context window used or remaining'; }
     getDisplayName(): string { return 'Context %'; }
+    getCategory(): string { return 'Context'; }
     getEditorDisplay(item: WidgetItem): WidgetEditorDisplay {
         const isInverse = item.metadata?.inverse === 'true';
         const modifiers: string[] = [];

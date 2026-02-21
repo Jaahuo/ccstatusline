@@ -12,6 +12,7 @@ export class ContextPercentageUsableWidget implements Widget {
     getDefaultColor(): string { return 'green'; }
     getDescription(): string { return 'Shows percentage of usable context window used or remaining (80% of max before auto-compact)'; }
     getDisplayName(): string { return 'Context % (usable)'; }
+    getCategory(): string { return 'Context'; }
     getEditorDisplay(item: WidgetItem): WidgetEditorDisplay {
         const isInverse = item.metadata?.inverse === 'true';
         const modifiers: string[] = [];

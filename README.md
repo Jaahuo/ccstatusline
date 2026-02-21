@@ -46,6 +46,19 @@
 
 ## 🆕 Recent Updates
 
+### v2.0.27 - Git Root Dir widget and raw-mode editor guardrails
+
+- **📁 Git Root Dir widget** - Added a new Git widget that shows the repository root directory name.
+
+### v2.0.26 - Session naming, CWD options, and TUI workflow improvements
+
+- **🏷️ Session Name widget** - Added a new widget that shows the current Claude Code session name from `/rename`.
+- **🏠 Current Working Directory home abbreviation** - Added a `~` abbreviation option for CWD display in both preview and live rendering.
+- **🧠 Context model suffix fix** - Context widgets now recognize the `[1m]` suffix across models, not just a single model path.
+- **🧭 Widget picker UX updates** - Improved widget discovery/navigation and added clearer, safer clear-line behavior.
+- **⌨️ TUI editor input fix** - Prevented shortcut/input leakage into widget editor flows.
+- **📄 Repo docs update** - Migrated guidance from `CLAUDE.md` to `AGENTS.md` (with symlink compatibility).
+
 ### v2.0.16 - Add fish style path abbreviation toggle to Current Working Directory widget
 
 ### v2.0.15 - Block Timer calculation fixes
@@ -355,6 +368,7 @@ Once configured, ccstatusline automatically formats your Claude Code status line
 - **Git Worktree** - Shows the name of the current git worktree
 - **Session Clock** - Shows elapsed time since session start (e.g., "2hr 15m")
 - **Session Cost** - Shows total session cost in USD (e.g., "$1.23")
+- **Session Name** - Shows the session name set via `/rename` command in Claude Code
 - **Block Timer** - Shows time elapsed in current 5-hour block or progress bar
 - **Current Working Directory** - Shows current working directory with configurable path segments
 - **Version** - Shows Claude Code version
