@@ -46,6 +46,19 @@
 
 ## 🆕 Recent Updates
 
+### v2.0.27 - Git Root Dir widget and raw-mode editor guardrails
+
+- **📁 Git Root Dir widget** - Added a new Git widget that shows the repository root directory name.
+
+### v2.0.26 - Session naming, CWD options, and TUI workflow improvements
+
+- **🏷️ Session Name widget** - Added a new widget that shows the current Claude Code session name from `/rename`.
+- **🏠 Current Working Directory home abbreviation** - Added a `~` abbreviation option for CWD display in both preview and live rendering.
+- **🧠 Context model suffix fix** - Context widgets now recognize the `[1m]` suffix across models, not just a single model path.
+- **🧭 Widget picker UX updates** - Improved widget discovery/navigation and added clearer, safer clear-line behavior.
+- **⌨️ TUI editor input fix** - Prevented shortcut/input leakage into widget editor flows.
+- **📄 Repo docs update** - Migrated guidance from `CLAUDE.md` to `AGENTS.md` (with symlink compatibility).
+
 ### v2.0.16 - Add fish style path abbreviation toggle to Current Working Directory widget
 
 ### v2.0.15 - Block Timer calculation fixes
