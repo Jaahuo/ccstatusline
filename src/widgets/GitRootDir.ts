@@ -1,5 +1,3 @@
-import { execSync } from 'child_process';
-
 import type { RenderContext } from '../types/RenderContext';
 import type { Settings } from '../types/Settings';
 import type {
@@ -8,6 +6,10 @@ import type {
     WidgetEditorDisplay,
     WidgetItem
 } from '../types/Widget';
+import {
+    isInsideGitWorkTree,
+    runGit
+} from '../utils/git';
 
 export class GitRootDirWidget implements Widget {
     getDefaultColor(): string { return 'cyan'; }
@@ -49,7 +51,11 @@ export class GitRootDirWidget implements Widget {
             return 'my-repo';
         }
 
-        const rootDir = this.getGitRootDir();
+        if (!isInsideGitWorkTree(context)) {
+            return hideNoGit ? null : 'no git';
+        }
+
+        const rootDir = this.getGitRootDir(context);
         if (rootDir) {
             return this.getRootDirName(rootDir);
         }
@@ -57,16 +63,8 @@ export class GitRootDirWidget implements Widget {
         return hideNoGit ? null : 'no git';
     }
 
-    private getGitRootDir(): string | null {
-        try {
-            const rootDir = execSync('git rev-parse --show-toplevel', {
-                encoding: 'utf8',
-                stdio: ['pipe', 'pipe', 'ignore']
-            }).trim();
-            return rootDir || null;
-        } catch {
-            return null;
-        }
+    private getGitRootDir(context: RenderContext): string | null {
+        return runGit('rev-parse --show-toplevel', context);
     }
 
     private getRootDirName(rootDir: string): string {
