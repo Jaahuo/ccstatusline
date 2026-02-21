@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import { createHash } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 import { globSync } from 'tinyglobby';
@@ -22,22 +23,43 @@ const existsSync = fs.existsSync;
 
 // --- Block Cache Functions ---
 
-interface BlockCache { startTime: string }
+interface BlockCache {
+    startTime: string;
+    configDir?: string;
+}
+
+function normalizeConfigDir(configDir: string): string {
+    return path.resolve(configDir);
+}
 
 /**
- * Returns the path to the block cache file
+ * Returns the path to the block cache file for a specific Claude config directory
  */
-export function getBlockCachePath(): string {
-    return path.join(os.homedir(), '.cache', 'ccstatusline', 'block-cache.json');
+export function getBlockCachePath(configDir = getClaudeConfigDir()): string {
+    const normalizedConfigDir = normalizeConfigDir(configDir);
+    const configHash = createHash('sha256')
+        .update(normalizedConfigDir)
+        .digest('hex')
+        .slice(0, 16);
+
+    return path.join(
+        os.homedir(),
+        '.cache',
+        'ccstatusline',
+        `block-cache-${configHash}.json`
+    );
 }
 
 /**
  * Reads the block cache file and returns the cached start time
  * Returns null if cache doesn't exist or is invalid
  */
-export function readBlockCache(): Date | null {
+export function readBlockCache(expectedConfigDir?: string): Date | null {
     try {
-        const cachePath = getBlockCachePath();
+        const normalizedExpectedConfigDir = expectedConfigDir !== undefined
+            ? normalizeConfigDir(expectedConfigDir)
+            : undefined;
+        const cachePath = getBlockCachePath(normalizedExpectedConfigDir);
         if (!existsSync(cachePath)) {
             return null;
         }
@@ -45,6 +67,14 @@ export function readBlockCache(): Date | null {
         const cache = JSON.parse(content) as BlockCache;
         if (typeof cache.startTime !== 'string') {
             return null;
+        }
+        if (normalizedExpectedConfigDir !== undefined) {
+            if (typeof cache.configDir !== 'string') {
+                return null;
+            }
+            if (cache.configDir !== normalizedExpectedConfigDir) {
+                return null;
+            }
         }
         const date = new Date(cache.startTime);
         if (Number.isNaN(date.getTime())) {
@@ -60,14 +90,18 @@ export function readBlockCache(): Date | null {
  * Writes the block start time to the cache file
  * Creates the cache directory if it doesn't exist
  */
-export function writeBlockCache(startTime: Date): void {
+export function writeBlockCache(startTime: Date, configDir = getClaudeConfigDir()): void {
     try {
-        const cachePath = getBlockCachePath();
+        const normalizedConfigDir = normalizeConfigDir(configDir);
+        const cachePath = getBlockCachePath(normalizedConfigDir);
         const cacheDir = path.dirname(cachePath);
         if (!existsSync(cacheDir)) {
             mkdirSync(cacheDir, { recursive: true });
         }
-        const cache: BlockCache = { startTime: startTime.toISOString() };
+        const cache: BlockCache = {
+            startTime: startTime.toISOString(),
+            configDir: normalizedConfigDir
+        };
         writeFileSync(cachePath, JSON.stringify(cache), 'utf-8');
     } catch {
         // Silently fail - caching is best-effort
@@ -81,9 +115,10 @@ export function writeBlockCache(startTime: Date): void {
 export function getCachedBlockMetrics(sessionDurationHours = 5): BlockMetrics | null {
     const sessionDurationMs = sessionDurationHours * 60 * 60 * 1000;
     const now = new Date();
+    const activeConfigDir = getClaudeConfigDir();
 
     // Check cache first
-    const cachedStartTime = readBlockCache();
+    const cachedStartTime = readBlockCache(activeConfigDir);
     if (cachedStartTime) {
         const blockEndTime = new Date(cachedStartTime.getTime() + sessionDurationMs);
         if (now.getTime() <= blockEndTime.getTime()) {
@@ -101,7 +136,7 @@ export function getCachedBlockMetrics(sessionDurationHours = 5): BlockMetrics | 
 
     // Write to cache if we found a valid block
     if (metrics) {
-        writeBlockCache(metrics.startTime);
+        writeBlockCache(metrics.startTime, activeConfigDir);
     }
 
     return metrics;
